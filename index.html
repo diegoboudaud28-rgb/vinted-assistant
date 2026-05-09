@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinted IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0D1117; color: #E6EDF3; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    .header { background: #161B22; border-bottom: 1px solid #30363D; padding: 16px 24px; }
+    .header-inner { max-width: 520px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+    .logo { width: 38px; height: 38px; background: #00C4A0; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .logo-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: #E6EDF3; }
+    .logo-text h1 span { color: #00C4A0; }
+    .logo-text p { font-size: 12px; color: #8B949E; }
+
+    .container { max-width: 520px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    .tabs { display: flex; gap: 6px; background: #161B22; border: 1px solid #30363D; border-radius: 12px; padding: 6px; margin-bottom: 24px; }
+    .tab { flex: 1; padding: 10px; border: none; cursor: pointer; background: transparent; color: #8B949E; font-weight: 400; border-radius: 8px; font-size: 14px; transition: all 0.2s; font-family: inherit; }
+    .tab.active { background: #00C4A0; color: #0D1117; font-weight: 700; }
+
+    .panel { background: #161B22; border: 1px solid #30363D; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+    label.field-label { color: #8B949E; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 8px; }
+
+    .upload-zone { border: 2px dashed #30363D; border-radius: 12px; height: 120px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color 0.2s; overflow: hidden; }
+    .upload-zone:hover { border-color: #00C4A0; }
+    .upload-zone img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; }
+    .upload-zone span { color: #8B949E; font-size: 14px; }
+
+    textarea { width: 100%; background: #0D1117; border: 1px solid #30363D; border-radius: 10px; padding: 12px 14px; color: #E6EDF3; font-size: 14px; font-family: inherit; resize: vertical; outline: none; line-height: 1.6; }
+    textarea:focus { border-color: #00C4A0; }
+
+    .btn { width: 100%; padding: 14px; background: #00C4A0; border: none; border-radius: 10px; color: #0D1117; font-weight: 700; font-size: 15px; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+    .btn:disabled { background: #30363D; color: #8B949E; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { background: #00b090; }
+
+    .result-card { background: #0D1117; border: 1px solid #30363D; border-radius: 10px; padding: 14px; }
+    .result-card.highlight { border-color: rgba(0,196,160,0.4); }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .result-label { color: #00C4A0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .result-text { color: #E6EDF3; font-size: 14px; line-height: 1.6; }
+
+    .copy-btn { padding: 4px 12px; border: 1px solid #30363D; border-radius: 6px; background: transparent; color: #8B949E; cursor: pointer; font-size: 12px; font-family: inherit; transition: all 0.2s; }
+    .copy-btn.copied { background: #00C4A0; color: #0D1117; border-color: #00C4A0; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { padding: 8px 14px; border: 1px solid #30363D; border-radius: 20px; background: transparent; color: #8B949E; cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.2s; }
+    .chip.active { border-color: #00C4A0; background: rgba(0,196,160,0.12); color: #00C4A0; }
+
+    .spinner { display: flex; align-items: center; gap: 8px; color: #8B949E; font-size: 14px; }
+    .spin { width: 16px; height: 16px; border: 2px solid #30363D; border-top-color: #00C4A0; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error { color: #FF6B6B; font-size: 13px; }
+    .footer { text-align: center; color: #8B949E; font-size: 12px; margin-top: 24px; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">👕</div>
+    <div class="logo-text">
+      <h1>Vinted <span>IA</span></h1>
+      <p>Ton assistant vendeur personnel</p>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(0)">📸 Créer annonce</button>
+    <button class="tab" onclick="switchTab(1)">💬 Répondre</button>
+  </div>
+
+  <!-- TAB 1 : Créer annonce -->
+  <div id="tab0" class="panel">
+    <div>
+      <label class="field-label">Photo (optionnel)</label>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+        <span>📷 Ajouter une photo</span>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleImage(event)" />
+    </div>
+
+    <div>
+      <label class="field-label">Décris le vêtement *</label>
+      <textarea id="descInput" rows="3" placeholder="Ex: Jean slim bleu Zara, taille 38, très bon état, porté 2-3 fois..."></textarea>
+    </div>
+
+    <div id="genError" class="error hidden"></div>
+
+    <button class="btn" id="genBtn" onclick="generateListing()">✨ Générer l'annonce</button>
+    <div id="genSpinner" class="spinner hidden"><div class="spin"></div> IA en train de générer...</div>
+
+    <div id="genResults" class="hidden" style="display:flex;flex-direction:column;gap:14px;"></div>
+  </div>
+
+  <!-- TAB 2 : Répondre -->
+  <div id="tab1" class="panel hidden">
+    <div>
+      <label class="field-label">Type de message reçu</label>
+      <div class="chips" id="chips">
+        <button class="chip" onclick="selectChip(0)">Négociation prix</button>
+        <button class="chip" onclick="selectChip(1)">Question taille</button>
+        <button class="chip" onclick="selectChip(2)">Délai livraison</button>
+        <button class="chip" onclick="selectChip(3)">Réservation</button>
+        <button class="chip" onclick="selectChip(4)">État article</button>
+      </div>
+    </div>
+
+    <div>
+      <label class="field-label">Ou colle le message ici</label>
+      <textarea id="msgInput" rows="3" placeholder="Colle le message de l'acheteur..." oninput="clearChips()"></textarea>
+    </div>
+
+    <div id="msgError" class="error hidden"></div>
+
+    <button class="btn" id="msgBtn" onclick="generateReply()">💬 Rédiger la réponse</button>
+    <div id="msgSpinner" class="spinner hidden"><div class="spin"></div> IA en train de rédiger...</div>
+
+    <div id="msgResult" class="hidden">
+      <div class="result-card highlight">
+        <div class="result-header">
+          <span class="result-label">Réponse suggérée</span>
+          <button class="copy-btn" id="copyMsgBtn" onclick="copyText('msgText', 'copyMsgBtn')">Copier</button>
+        </div>
+        <p class="result-text" id="msgText"></p>
+      </div>
+    </div>
+  </div>
+
+  <p class="footer">Copie le texte généré → colle sur Vinted → vends plus vite 🚀</p>
+</div>
+
+<script>
+const TEMPLATES = [
+  "Bonjour ! Je suis intéressé(e) mais pourriez-vous baisser un peu le prix ?",
+  "Bonjour, quelle est la taille exacte ? Je fais du M normalement.",
+  "Bonjour, combien de temps pour la livraison ?",
+  "Bonjour, est-ce que je peux réserver l'article ?",
+  "Bonjour, est-ce que l'article est vraiment en bon état ?"
+];
+
+let selectedChip = -1;
+let imageBase64 = null;
+
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.getElementById('tab0').classList.toggle('hidden', n!==0);
+  document.getElementById('tab1').classList.toggle('hidden', n!==1);
+}
+
+function handleImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const zone = document.getElementById('uploadZone');
+  const url = URL.createObjectURL(file);
+  zone.innerHTML = `<img src="${url}" />`;
+  const reader = new FileReader();
+  reader.onload = () => { imageBase64 = reader.result.split(',')[1]; };
+  reader.readAsDataURL(file);
+}
+
+function selectChip(i) {
+  selectedChip = i;
+  document.querySelectorAll('.chip').forEach((c,j) => c.classList.toggle('active', i===j));
+  document.getElementById('msgInput').value = TEMPLATES[i];
+}
+
+function clearChips() {
+  selectedChip = -1;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+}
+
+function copyText(textId, btnId) {
+  const text = document.getElementById(textId).innerText;
+  navigator.clipboard.writeText(text);
+  const btn = document.getElementById(btnId);
+  btn.textContent = '✓ Copié';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copier'; btn.classList.remove('copied'); }, 2000);
+}
+
+async function callClaude(system, userContent) {
+  const body = {
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1000,
+    system: system,
+    messages: [{ role: "user", content: userContent }]
+  };
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  return data.content?.map(i => i.text || '').join('') || '';
+}
+
+async function generateListing() {
+  const desc = document.getElementById('descInput').value.trim();
+  const errEl = document.getElementById('genError');
+  if (!desc) { errEl.textContent = 'Décris le vêtement d\'abord.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+  document.getElementById('genBtn').disabled = true;
+  document.getElementById('genSpinner').classList.remove('hidden');
+  document.getElementById('genResults').classList.add('hidden');
+
+  try {
+    const system = `Tu es un expert en vente sur Vinted. Génère :
+1. Un titre accrocheur (max 60 caractères)
+2. Une description vendeuse (3-4 phrases, émojis inclus)
+3. Un prix suggéré en euros
+4. Des hashtags de référencement (10-15 hashtags : marque, type, style, couleur, taille, saison, genre)
+Réponds UNIQUEMENT en JSON valide sans backticks : {"titre":"...","description":"...","prix":"...","hashtags":"..."}`;
+
+    let userContent;
+    if (imageBase64) {
+      userContent = [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } },
+        { type: "text", text: `Génère une annonce Vinted. Infos : ${desc}` }
+      ];
+    } else {
+      userContent = `Génère une annonce Vinted pour : ${desc}`;
+    }
+
+    const text = await callClaude(system, userContent);
+    const clean = text.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    const fields = [
+      { key: 'titre', label: 'Titre' },
+      { key: 'description', label: 'Description' },
+      { key: 'prix', label: 'Prix suggéré' },
+      { key: 'hashtags', label: 'Hashtags référencement' }
+    ];
+
+    const container = document.getElementById('genResults');
+    container.innerHTML = fields.map(f => `
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-label">${f.label}</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(${JSON.stringify(result[f.key])});this.textContent='✓ Copié';this.classList.add('copied');setTimeout(()=>{this.textContent='Copier';this.classList.remove('copied')},2000)">Copier</button>
+        </div>
+        <p class="result-text">${result[f.key]}</p>
+      </div>
+    `).join('');
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '14px';
+    container.classList.remove('hidden');
+  } catch(e) {
+    errEl.textContent = 'Erreur lors de la génération. Réessaie.';
+    errEl.classList.remove('hidden');
+  }
+
+  document.getElementById('genBtn').disabled = false;
+  document.getElementById('genSpinner').classList.add('hidden');
+}
+
+async function generateReply() {
+  const msg = document.getElementById('msgInput').value.trim();
+  const errEl = document.getElementById('msgError');
+  if (!msg) { errEl.textContent = 'Sélectionne ou écris un message.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+  document.getElementById('msgBtn').disabled = true;
+  document.getElementById('msgSpinner').classList.remove('hidden');
+  document.getElementById('msgResult').classList.add('hidden');
+
+  try {
+    const system = `Tu es un assistant vendeur Vinted. Un acheteur t'envoie un message. Tu rédiges une réponse courte, sympathique et professionnelle en français. Réponds UNIQUEMENT avec le texte du message, rien d'autre.`;
+    const text = await callClaude(system, `Message de l'acheteur : "${msg}"`);
+    document.getElementById('msgText').textContent = text.trim();
+    document.getElementById('msgResult').classList.remove('hidden');
+  } catch(e) {
+    errEl.textContent = 'Erreur. Réessaie.';
+    errEl.classList.remove('hidden');
+  }
+
+  document.getElementById('msgBtn').disabled = false;
+  document.getElementById('msgSpinner').classList.add('hidden');
+}
+</script>
+</body>
+</html>
